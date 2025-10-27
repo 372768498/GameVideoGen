@@ -9,6 +9,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GenerationProgress } from '@/components/game-video-gen/GenerationProgress';
 import { VideoPreview } from '@/components/game-video-gen/VideoPreview';
 
+// 在 export default function GameVideoGenPage() 之前添加
+const [isAuthorized, setIsAuthorized] = useState(false);
+const [password, setPassword] = useState('');
+const [passwordError, setPasswordError] = useState('');
+
+useEffect(() => {
+  const savedAuth = localStorage.getItem('gameVideoGenAuth');
+  if (savedAuth) {
+    const { expires } = JSON.parse(savedAuth);
+    if (Date.now() < expires) {
+      setIsAuthorized(true);
+    }
+  }
+}, []);
+
+const handlePasswordSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (password === 'gamevideo2025') {
+    localStorage.setItem('gameVideoGenAuth', JSON.stringify({
+      token: 'authorized',
+      expires: Date.now() + 7 * 24 * 60 * 60 * 1000
+    }));
+    setIsAuthorized(true);
+  } else {
+    setPasswordError('密码错误');
+    setPassword('');
+  }
+};
+
+// 在最外层 return 之前添加
+if (!isAuthorized) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-2xl p-8 border border-gray-700">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">🔒 访问验证</h1>
+          <p className="text-gray-400">请输入访问密码</p>
+        </div>
+        <form onSubmit={handlePasswordSubmit}>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="password" className="text-white">访问密码</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="请输入密码"
+                className="mt-2 bg-gray-700 border-gray-600 text-white"
+                autoFocus
+              />
+              {passwordError && <p className="text-red-400 text-sm mt-2">{passwordError}</p>}
+            </div>
+            <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-purple-500">验证</Button>
+          </div>
+        </form>
+        <div className="mt-6 text-center text-gray-500 text-sm">
+          <p>授权有效期：7天</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function GameVideoGenPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [password, setPassword] = useState('');
