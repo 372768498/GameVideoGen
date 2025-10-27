@@ -29,7 +29,7 @@ export async function generateVideo(
     const result = await fal.subscribe('fal-ai/sora-2/text-to-video', {
       input: {
         prompt,
-        duration,
+        duration: duration.toString() as "4" | "8" | "12",
         aspect_ratio: aspectRatio,
         safety_tolerance: '2',
       },
