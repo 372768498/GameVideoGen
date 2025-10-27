@@ -1,4 +1,4 @@
-import * as fal from '@fal-ai/serverless-client';
+import { fal } from '@fal-ai/client';
 
 // 配置FAL.AI客户端
 fal.config({

@@ -13,7 +13,7 @@
     "react": "^18",
     "react-dom": "^18",
     "openai": "^4.77.3",
-    "@fal-ai/serverless-client": "^0.14.4",
+    "@fal-ai/client": "^1.6.2",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
