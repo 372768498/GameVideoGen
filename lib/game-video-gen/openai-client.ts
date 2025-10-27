@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import type { Scene, VideoScript } from './types';
 
 // 初始化OpenAI客户端
 const openai = new OpenAI({
@@ -12,26 +13,6 @@ export interface GenerateScriptParams {
   platform: 'douyin' | 'kuaishou' | 'youtube';
   duration: 4 | 8 | 12;
   aspectRatio: '9:16' | '16:9';
-}
-
-export interface Scene {
-  scene_number: number;
-  duration: number;
-  visual_description: string;
-  camera_movement: string;
-  voiceover: string;
-  visual_prompt: string;
-}
-
-export interface VideoScript {
-  title: string;
-  language: string;
-  platform: string;
-  duration: number;
-  aspect_ratio: string;
-  scenes: Scene[];
-  total_scenes: number;
-  hashtags: string[];
 }
 
 export async function generateVideoScript(
