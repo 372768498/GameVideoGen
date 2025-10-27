@@ -31,7 +31,6 @@ export async function generateVideo(
         prompt,
         duration: duration.toString() as "4" | "8" | "12",
         aspect_ratio: aspectRatio,
-        safety_tolerance: '2',
       },
       logs: true,
       pollInterval: 3000,
