@@ -283,7 +283,7 @@ export default function GameVideoGenPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="duration" className="text-white">视频时长</Label>
-                <Select value={formData.duration.toString()} onValueChange={(value: any) => setFormData({ ...formData, duration: parseInt(value) })}>
+                <Select value={formData.duration.toString()} onValueChange={(value) => setFormData({ ...formData, duration: parseInt(value) as 4 | 8 | 12 })}>
                   <SelectTrigger className="mt-2 bg-gray-700 border-gray-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
