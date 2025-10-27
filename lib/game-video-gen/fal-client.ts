@@ -26,7 +26,7 @@ export async function generateVideo(
   console.log('开始生成视频...', { duration, aspectRatio });
 
   try {
-    const result = await fal.subscribe('fal-ai/sora-2/text-to-video', {
+    const result: any = await fal.subscribe('fal-ai/sora-2/text-to-video', {
       input: {
         prompt,
         duration: duration.toString() as "4" | "8" | "12",
@@ -47,9 +47,9 @@ export async function generateVideo(
     const estimatedCost = duration === 4 ? 0.13 : duration === 8 ? 0.22 : 0.31;
 
     return {
-      videoUrl: result.video?.url || '',
+      videoUrl: result.data?.video?.url || result.video?.url || '',
       duration,
-      seed: result.seed,
+      seed: result.data?.seed || result.seed,
       cost: estimatedCost,
     };
   } catch (error: any) {
