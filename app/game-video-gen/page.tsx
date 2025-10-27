@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,11 @@ import { GenerationProgress } from '@/components/game-video-gen/GenerationProgre
 import { VideoPreview } from '@/components/game-video-gen/VideoPreview';
 
 export default function GameVideoGenPage() {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
   const [formData, setFormData] = useState({
     gameTitle: '',
     gameDescription: '',
@@ -29,6 +34,44 @@ export default function GameVideoGenPage() {
   });
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [errors, setErrors] = useState<any>({});
+
+  // 检查是否已经授权
+  useEffect(() => {
+    const checkAuth = () => {
+      const savedAuth = localStorage.getItem('gameVideoGenAuth');
+      if (savedAuth) {
+        const { token, expires } = JSON.parse(savedAuth);
+        if (Date.now() < expires) {
+          setIsAuthorized(true);
+        } else {
+          localStorage.removeItem('gameVideoGenAuth');
+        }
+      }
+      setIsCheckingAuth(false);
+    };
+    checkAuth();
+  }, []);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // 正确的访问密码（这个可以通过环境变量配置）
+    const correctPassword = process.env.NEXT_PUBLIC_ACCESS_PASSWORD || 'gamevideo2025';
+    
+    if (password === correctPassword) {
+      // 密码正确，保存授权状态（7天有效）
+      const authData = {
+        token: 'authorized',
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7天后过期
+      };
+      localStorage.setItem('gameVideoGenAuth', JSON.stringify(authData));
+      setIsAuthorized(true);
+      setPasswordError('');
+    } else {
+      setPasswordError('密码错误，请重试');
+      setPassword('');
+    }
+  };
 
   const validateForm = () => {
     const newErrors: any = {};
@@ -172,6 +215,69 @@ export default function GameVideoGenPage() {
     return (scriptCost + videoCost).toFixed(2);
   };
 
+  // 检查授权中
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">加载中...</div>
+      </div>
+    );
+  }
+
+  // 密码验证页面
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-gray-800 rounded-lg shadow-2xl p-8 border border-gray-700">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-white mb-2">
+                🔒 访问验证
+              </h1>
+              <p className="text-gray-400">
+                请输入访问密码
+              </p>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="password" className="text-white">
+                    访问密码
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="请输入密码"
+                    className="mt-2 bg-gray-700 border-gray-600 text-white"
+                    autoFocus
+                  />
+                  {passwordError && (
+                    <p className="text-red-400 text-sm mt-2">{passwordError}</p>
+                  )}
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                >
+                  验证
+                </Button>
+              </div>
+            </form>
+
+            <div className="mt-6 text-center text-gray-500 text-sm">
+              <p>授权有效期：7天</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 生成中页面
   if (stage === 'generating') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
@@ -182,6 +288,7 @@ export default function GameVideoGenPage() {
     );
   }
 
+  // 完成页面
   if (stage === 'complete' && generatedVideo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
@@ -192,6 +299,7 @@ export default function GameVideoGenPage() {
     );
   }
 
+  // 主表单页面
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
