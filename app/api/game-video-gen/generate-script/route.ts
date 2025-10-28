@@ -4,12 +4,21 @@ import { generateScript } from '@/lib/openai-client';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { gameName, gameDescription, targetPlatform, videoDuration, language } = body;
+    
+    // 支持两种参数格式：新格式(gameTitle)和旧格式(gameName)
+    const gameName = body.gameTitle || body.gameName;
+    const gameDescription = body.gameDescription;
+    const targetPlatform = body.platform || body.targetPlatform;
+    const videoDuration = body.duration || body.videoDuration;
+    const language = body.language;
 
     // 验证必需参数
     if (!gameName || !gameDescription || !targetPlatform || !videoDuration || !language) {
       return NextResponse.json(
-        { error: '缺少必需参数' },
+        { 
+          error: '缺少必需参数',
+          received: { gameName, gameDescription, targetPlatform, videoDuration, language }
+        },
         { status: 400 }
       );
     }
