@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateVideo } from '@/lib/fal-client';
+import { videoTaskStore } from '@/lib/video-task-store';
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,14 +57,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 调用FAL.AI生成视频
-    const result = await generateVideo({
-      prompt,
-      duration: duration as "4s" | "8s" | "12s",
-      aspectRatio: aspectRatio as "16:9" | "9:16",
+    // 生成任务ID
+    const taskId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 创建任务记录
+    videoTaskStore.createTask(taskId);
+
+    // 立即返回任务ID，不等待视频生成完成
+    const response = NextResponse.json({ 
+      taskId,
+      status: 'processing',
+      message: '视频生成已开始，请轮询获取结果'
     });
 
-    return NextResponse.json(result);
+    // 在后台异步生成视频
+    generateVideoAsync(taskId, prompt, duration as "4s" | "8s" | "12s", aspectRatio as "16:9" | "9:16");
+
+    return response;
   } catch (error) {
     console.error('Video generation error:', error);
     return NextResponse.json(
@@ -73,5 +83,34 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+// 异步生成视频
+async function generateVideoAsync(
+  taskId: string, 
+  prompt: string, 
+  duration: "4s" | "8s" | "12s", 
+  aspectRatio: "16:9" | "9:16"
+) {
+  try {
+    console.log(`[${taskId}] Starting video generation...`);
+    videoTaskStore.updateTask(taskId, { status: 'processing' });
+
+    const result = await generateVideo({ prompt, duration, aspectRatio });
+
+    console.log(`[${taskId}] Video generation completed`);
+    videoTaskStore.updateTask(taskId, {
+      status: 'completed',
+      videoUrl: result.videoUrl,
+      thumbnailUrl: result.thumbnailUrl,
+      cost: result.cost,
+    });
+  } catch (error) {
+    console.error(`[${taskId}] Video generation failed:`, error);
+    videoTaskStore.updateTask(taskId, {
+      status: 'failed',
+      error: error instanceof Error ? error.message : '视频生成失败',
+    });
   }
 }
