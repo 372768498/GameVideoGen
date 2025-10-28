@@ -1,135 +1,242 @@
-// ==========================================
-// 核心数据类型定义
-// ==========================================
+// ========================================
+// Core Type Definitions for GameVideoGen
+// ========================================
 
 /**
- * 支持的平台
+ * Supported video platforms
  */
 export type Platform = 'douyin' | 'kuaishou' | 'youtube';
 
 /**
- * 支持的语言
- */
-export type Language = 'zh' | 'en';
-
-/**
- * 支持的视频时长（秒）
+ * Video durations in seconds
  */
 export type VideoDuration = 4 | 8 | 12;
 
 /**
- * 支持的宽高比
+ * Video aspect ratios
  */
-export type AspectRatio = '9:16' | '16:9';
+export type AspectRatio = '16:9' | '9:16';
 
 /**
- * 任务状态
+ * Supported languages
  */
-export type TaskStatus = 'pending' | 'generating_script' | 'generating_video' | 'completed' | 'failed';
-
-// ==========================================
-// 请求和响应类型
-// ==========================================
+export type Language = 'zh' | 'en';
 
 /**
- * 创建视频任务的请求
+ * Video generation status
  */
-export interface CreateVideoTaskRequest {
-  gameName: string;
-  gameDescription: string;
-  platform: Platform;
-  duration: VideoDuration;
-  aspectRatio: AspectRatio;
-  language: Language;
-}
+export type VideoStatus = 'pending' | 'generating_script' | 'generating_video' | 'completed' | 'failed';
+
+// ========================================
+// Script Generation Types
+// ========================================
 
 /**
- * 视频场景
+ * Single scene in a video script
  */
-export interface VideoScene {
+export interface ScriptScene {
+  /** Scene duration in seconds */
   duration: number;
+  /** Visual description for video generation */
   visualPrompt: string;
-  audioPrompt: string;
+  /** Audio/voiceover prompt (optional) */
+  audioPrompt?: string;
 }
 
 /**
- * 视频脚本
+ * Complete video script structure
  */
 export interface VideoScript {
-  scenes: VideoScene[];
-  totalDuration: number;
+  /** Array of scenes */
+  scenes: ScriptScene[];
+  /** Total duration of the video */
+  totalDuration: VideoDuration;
 }
 
 /**
- * 视频任务响应
+ * Request payload for script generation
  */
-export interface VideoTask {
-  id: string;
-  status: TaskStatus;
+export interface ScriptGenerationRequest {
+  /** Name of the game */
   gameName: string;
+  /** Detailed description of the game */
+  gameDescription: string;
+  /** Target platform for the video */
+  targetPlatform: Platform;
+  /** Desired video duration */
+  videoDuration: VideoDuration;
+  /** Language for script generation */
+  language: Language;
+}
+
+/**
+ * Response from script generation API
+ */
+export interface ScriptGenerationResponse {
+  /** Generated script */
+  script: VideoScript;
+  /** Estimated cost in USD */
+  estimatedCost: number;
+}
+
+// ========================================
+// Video Generation Types
+// ========================================
+
+/**
+ * Request payload for video generation
+ */
+export interface VideoGenerationRequest {
+  /** Combined visual prompt from all scenes */
+  prompt: string;
+  /** Video duration (must include 's' suffix for FAL.AI) */
+  duration: '4s' | '8s' | '12s';
+  /** Aspect ratio */
+  aspectRatio: AspectRatio;
+}
+
+/**
+ * Response from video generation API
+ */
+export interface VideoGenerationResponse {
+  /** URL of the generated video */
+  videoUrl: string;
+  /** URL of the video thumbnail (optional) */
+  thumbnailUrl?: string;
+  /** Generation cost in USD */
+  cost: number;
+}
+
+// ========================================
+// Database Types (Supabase)
+// ========================================
+
+/**
+ * Video record in database
+ */
+export interface VideoRecord {
+  /** Unique identifier */
+  id: string;
+  /** User ID (foreign key to auth.users) */
+  userId: string;
+  /** Game name */
+  gameName: string;
+  /** Game description */
+  gameDescription: string;
+  /** Target platform */
+  targetPlatform: Platform;
+  /** Video duration in seconds */
+  videoDuration: VideoDuration;
+  /** Aspect ratio */
+  aspectRatio: AspectRatio;
+  /** Language */
+  language: Language;
+  /** Generated script (JSON) */
+  scriptContent: VideoScript | null;
+  /** URL of generated video */
+  videoUrl: string | null;
+  /** URL of video thumbnail */
+  thumbnailUrl: string | null;
+  /** Generation cost in USD */
+  generationCost: number | null;
+  /** Current status */
+  status: VideoStatus;
+  /** Error message if failed */
+  errorMessage: string | null;
+  /** Additional metadata (JSON) */
+  metadata: Record<string, any> | null;
+  /** Creation timestamp */
+  createdAt: string;
+  /** Last update timestamp */
+  updatedAt: string;
+  /** Completion timestamp */
+  completedAt: string | null;
+}
+
+// ========================================
+// Cost Estimation
+// ========================================
+
+/**
+ * Cost breakdown for video generation
+ */
+export interface CostEstimate {
+  /** OpenAI script generation cost */
+  scriptCost: number;
+  /** FAL.AI video generation cost */
+  videoCost: number;
+  /** Total cost */
+  totalCost: number;
+}
+
+// ========================================
+// UI Component Props
+// ========================================
+
+/**
+ * Form values for video generation
+ */
+export interface VideoFormValues {
+  gameTitle: string;
   gameDescription: string;
   platform: Platform;
   duration: VideoDuration;
   aspectRatio: AspectRatio;
   language: Language;
-  script?: VideoScript;
-  videoUrl?: string;
-  thumbnailUrl?: string;
-  cost: number;
-  errorMessage?: string;
-  createdAt: string;
-  updatedAt: string;
-  completedAt?: string;
 }
 
 /**
- * 创建任务响应
+ * Generation progress state
  */
-export interface CreateTaskResponse {
-  taskId: string;
-  status: TaskStatus;
+export interface GenerationProgress {
+  /** Current step */
+  step: 'idle' | 'script' | 'video' | 'complete' | 'error';
+  /** Progress percentage (0-100) */
+  progress: number;
+  /** Status message */
   message: string;
+  /** Generated script (if available) */
+  script?: VideoScript;
+  /** Generated video URL (if available) */
+  videoUrl?: string;
+  /** Error message (if failed) */
+  error?: string;
+}
+
+// ========================================
+// API Error Response
+// ========================================
+
+/**
+ * Standardized error response
+ */
+export interface ApiError {
+  /** Error message */
+  error: string;
+  /** Detailed error information (optional) */
+  details?: any;
+}
+
+// ========================================
+// Utility Types
+// ========================================
+
+/**
+ * Platform display information
+ */
+export interface PlatformInfo {
+  value: Platform;
+  label: string;
+  defaultAspectRatio: AspectRatio;
+  description: string;
 }
 
 /**
- * 任务状态响应
+ * Duration option
  */
-export interface TaskStatusResponse {
-  task: VideoTask;
-}
-
-// ==========================================
-// 数据库模型（Supabase）
-// ==========================================
-
-/**
- * videos表的行类型
- */
-export interface VideoRow {
-  id: string;
-  status: TaskStatus;
-  game_name: string;
-  game_description: string;
-  platform: Platform;
-  duration: number;
-  aspect_ratio: AspectRatio;
-  language: Language;
-  script: VideoScript | null;
-  video_url: string | null;
-  thumbnail_url: string | null;
+export interface DurationOption {
+  value: VideoDuration;
+  label: string;
+  scenes: number;
   cost: number;
-  error_message: string | null;
-  created_at: string;
-  updated_at: string;
-  completed_at: string | null;
 }
-
-/**
- * 插入videos表的数据
- */
-export type VideoInsert = Omit<VideoRow, 'id' | 'created_at' | 'updated_at'>;
-
-/**
- * 更新videos表的数据
- */
-export type VideoUpdate = Partial<Omit<VideoRow, 'id' | 'created_at'>>;
