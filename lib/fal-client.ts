@@ -1,10 +1,5 @@
 import * as fal from "@fal-ai/client";
 
-// 配置FAL客户端
-fal.config({
-  credentials: process.env.FAL_KEY,
-});
-
 interface VideoGenerationParams {
   prompt: string;
   duration: "4s" | "8s" | "12s";
@@ -28,6 +23,7 @@ export async function generateVideo(params: VideoGenerationParams): Promise<Vide
         duration: duration,
         aspect_ratio: aspectRatio,
       },
+      credentials: process.env.FAL_KEY,
       logs: true,
       onQueueUpdate: (update) => {
         if (update.status === "IN_PROGRESS") {
